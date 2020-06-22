@@ -94,7 +94,7 @@ class Cart
      * @param mixed     $id
      * @param mixed     $name
      * @param int|float $qty
-     * @param float     $price
+     * @param integer     $price
      * @param array     $options
      * @return CartItem
      */
@@ -127,7 +127,7 @@ class Cart
      * Sets/adds an additional cost on the cart.
      *
      * @param string $name
-     * @param float $price
+     * @param integer $price
      * @todo add in session
      */
     public function addCost($name, $price)
@@ -139,16 +139,27 @@ class Cart
 
     /**
      * Gets an additional cost by name
-     * 
+     *
+     * @param $name
+     * @return integer
+     */
+    public function getCost($name)
+    {
+        return $this->extraCosts->get($name, 0);
+    }
+
+    /**
+     * Gets an formatted additional cost by name
+     *
      * @param $name
      * @param int|null $decimals
      * @param string|null $decimalPoint
      * @param string|null $thousandSeparator
      * @return string
      */
-    public function getCost($name, $decimals = null, $decimalPoint = null, $thousandSeparator = null)
+    public function getCostFormatted($name, $decimals = null, $decimalPoint = null, $thousandSeparator = null)
     {
-        $cost = $this->extraCosts->get($name, 0);
+        $cost = $this->getCost($name);
 
         return $this->numberFormat($cost, $decimals, $decimalPoint, $thousandSeparator);
     }
@@ -267,16 +278,12 @@ class Cart
 
         return $content->sum('qty');
     }
-
     /**
      * Get the total price of the items in the cart.
      *
-     * @param int    $decimals
-     * @param string $decimalPoint
-     * @param string $thousandSeparator
-     * @return string
+     * @return integer
      */
-    public function total($decimals = null, $decimalPoint = null, $thousandSeparator = null)
+    public function total()
     {
         $content = $this->getContent();
 
@@ -290,7 +297,37 @@ class Cart
 
         $total += $totalCost;
 
+        return $total;
+    }
+
+
+    /**
+     * Get the formatted total price of the items in the cart.
+     *
+     * @param int    $decimals
+     * @param string $decimalPoint
+     * @param string $thousandSeparator
+     * @return string
+     */
+    public function totalFormatted($decimals = null, $decimalPoint = null, $thousandSeparator = null)
+    {
+        $total = $this->total();
+
         return $this->numberFormat($total, $decimals, $decimalPoint, $thousandSeparator);
+    }
+
+    /**
+     * Get the total tax of the items in the cart.
+     *
+     * @return integer
+     */
+    public function tax()
+    {
+        $content = $this->getContent();
+
+        return $content->reduce(function ($tax, CartItem $cartItem) {
+            return $tax + ($cartItem->qty * $cartItem->tax);
+        }, 0);
     }
 
     /**
@@ -299,17 +336,24 @@ class Cart
      * @param int    $decimals
      * @param string $decimalPoint
      * @param string $thousandSeparator
-     * @return float
+     * @return string
      */
-    public function tax($decimals = null, $decimalPoint = null, $thousandSeparator = null)
+    public function taxFormatted($decimals = null, $decimalPoint = null, $thousandSeparator = null)
+    {
+        $tax = $this->tax();
+
+        return $this->numberFormat($tax, $decimals, $decimalPoint, $thousandSeparator);
+    }
+
+    public function subtotal()
     {
         $content = $this->getContent();
 
-        $tax = $content->reduce(function ($tax, CartItem $cartItem) {
-            return $tax + ($cartItem->qty * $cartItem->tax);
+        $subTotal = $content->reduce(function ($subTotal, CartItem $cartItem) {
+            return $subTotal + ($cartItem->qty * $cartItem->price);
         }, 0);
 
-        return $this->numberFormat($tax, $decimals, $decimalPoint, $thousandSeparator);
+        return $subTotal;
     }
 
     /**
@@ -320,13 +364,9 @@ class Cart
      * @param string $thousandSeparator
      * @return float
      */
-    public function subtotal($decimals = null, $decimalPoint = null, $thousandSeparator = null)
+    public function subtotalFormatted($decimals = null, $decimalPoint = null, $thousandSeparator = null)
     {
-        $content = $this->getContent();
-
-        $subTotal = $content->reduce(function ($subTotal, CartItem $cartItem) {
-            return $subTotal + ($cartItem->qty * $cartItem->price);
-        }, 0);
+        $subTotal = $this->subtotal();
 
         return $this->numberFormat($subTotal, $decimals, $decimalPoint, $thousandSeparator);
     }

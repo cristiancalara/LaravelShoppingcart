@@ -41,7 +41,7 @@ class CartItem implements Arrayable, Jsonable
     /**
      * The price without TAX of the cart item.
      *
-     * @var float
+     * @var integer
      */
     public $price;
 
@@ -94,6 +94,16 @@ class CartItem implements Arrayable, Jsonable
     }
 
     /**
+     * Returns the price without TAX.
+     *
+     * @return integer
+     */
+    public function price()
+    {
+        return $this->price;
+    }
+
+    /**
      * Returns the formatted price without TAX.
      *
      * @param int    $decimals
@@ -101,11 +111,22 @@ class CartItem implements Arrayable, Jsonable
      * @param string $thousandSeparator
      * @return string
      */
-    public function price($decimals = null, $decimalPoint = null, $thousandSeparator = null)
+    public function priceFormatted($decimals = null, $decimalPoint = null, $thousandSeparator = null)
     {
-        return $this->numberFormat($this->price, $decimals, $decimalPoint, $thousandSeparator);
+        $price = $this->price();
+        return $this->numberFormat($price, $decimals, $decimalPoint, $thousandSeparator);
     }
-    
+
+    /**
+     * Returns the price with TAX.
+     *
+     * @return integer
+     */
+    public function priceTax()
+    {
+        return $this->priceTax;
+    }
+
     /**
      * Returns the formatted price with TAX.
      *
@@ -114,9 +135,20 @@ class CartItem implements Arrayable, Jsonable
      * @param string $thousandSeparator
      * @return string
      */
-    public function priceTax($decimals = null, $decimalPoint = null, $thousandSeparator = null)
+    public function priceTaxFormatted($decimals = null, $decimalPoint = null, $thousandSeparator = null)
     {
         return $this->numberFormat($this->priceTax, $decimals, $decimalPoint, $thousandSeparator);
+    }
+
+    /**
+     * Returns the subtotal.
+     * Subtotal is price for whole CartItem without TAX
+     *
+     * @return integer
+     */
+    public function subtotal()
+    {
+        return $this->subtotal;
     }
 
     /**
@@ -128,11 +160,24 @@ class CartItem implements Arrayable, Jsonable
      * @param string $thousandSeparator
      * @return string
      */
-    public function subtotal($decimals = null, $decimalPoint = null, $thousandSeparator = null)
+    public function subtotalFormatted($decimals = null, $decimalPoint = null, $thousandSeparator = null)
     {
-        return $this->numberFormat($this->subtotal, $decimals, $decimalPoint, $thousandSeparator);
+        $subtotal = $this->subtotal();
+
+        return $this->numberFormat($subtotal, $decimals, $decimalPoint, $thousandSeparator);
     }
-    
+
+    /**
+     * Returns the total.
+     * Total is price for whole CartItem with TAX
+     *
+     * @return string
+     */
+    public function total()
+    {
+        return $this->total;
+    }
+
     /**
      * Returns the formatted total.
      * Total is price for whole CartItem with TAX
@@ -142,9 +187,21 @@ class CartItem implements Arrayable, Jsonable
      * @param string $thousandSeparator
      * @return string
      */
-    public function total($decimals = null, $decimalPoint = null, $thousandSeparator = null)
+    public function totalFormatted($decimals = null, $decimalPoint = null, $thousandSeparator = null)
     {
-        return $this->numberFormat($this->total, $decimals, $decimalPoint, $thousandSeparator);
+        $total = $this->total();
+
+        return $this->numberFormat($total, $decimals, $decimalPoint, $thousandSeparator);
+    }
+
+    /**
+     * Returns the formatted tax.
+     *
+     * @return integer
+     */
+    public function tax()
+    {
+        return $this->tax;
     }
 
     /**
@@ -155,11 +212,23 @@ class CartItem implements Arrayable, Jsonable
      * @param string $thousandSeparator
      * @return string
      */
-    public function tax($decimals = null, $decimalPoint = null, $thousandSeparator = null)
+    public function taxFormatted($decimals = null, $decimalPoint = null, $thousandSeparator = null)
     {
-        return $this->numberFormat($this->tax, $decimals, $decimalPoint, $thousandSeparator);
+        $tax = $this->tax();
+
+        return $this->numberFormat($tax, $decimals, $decimalPoint, $thousandSeparator);
     }
-    
+
+    /**
+     * Returns the formatted tax.
+     *
+     * @return integer
+     */
+    public function taxTotal()
+    {
+        return $this->taxTotal;
+    }
+
     /**
      * Returns the formatted tax.
      *
@@ -168,9 +237,11 @@ class CartItem implements Arrayable, Jsonable
      * @param string $thousandSeparator
      * @return string
      */
-    public function taxTotal($decimals = null, $decimalPoint = null, $thousandSeparator = null)
+    public function taxTotalFormatted($decimals = null, $decimalPoint = null, $thousandSeparator = null)
     {
-        return $this->numberFormat($this->taxTotal, $decimals, $decimalPoint, $thousandSeparator);
+        $taxTotal = $this->taxTota();
+
+        return $this->numberFormat($taxTotal, $decimals, $decimalPoint, $thousandSeparator);
     }
 
     /**
@@ -257,23 +328,23 @@ class CartItem implements Arrayable, Jsonable
         }
 
         if($attribute === 'priceTax') {
-            return number_format($this->price + $this->tax, 2, '.', '');
+            return $this->price + $this->tax;
         }
         
         if($attribute === 'subtotal') {
-            return number_format($this->qty * $this->price, 2, '.', '');
+            return $this->qty * $this->price;
         }
         
         if($attribute === 'total') {
-            return number_format($this->qty * $this->priceTax, 2, '.', '');
+            return $this->qty * $this->priceTax;
         }
 
         if($attribute === 'tax') {
-            return number_format($this->price * ($this->taxRate / 100), 2, '.', '');
+            return round($this->price * ($this->taxRate / 100), PHP_ROUND_HALF_EVEN);
         }
         
         if($attribute === 'taxTotal') {
-            return number_format($this->tax * $this->qty, 2, '.', '');
+            return $this->tax * $this->qty;
         }
 
         if($attribute === 'model' && isset($this->associatedModel)) {
